@@ -1,5 +1,7 @@
 # mpad-watcher
 
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+
 Super-quick-and-dirty hack which checks on MacOS if my local MPAD instance is still running. In case of failure, a message notification will be dispatched to the user's local account via osascript / MacOS Message Center.
 
 ## Configuration
