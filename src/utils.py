@@ -21,10 +21,9 @@
 
 import logging
 import argparse
-import datetime
-import time
 import requests
 import re
+import os
 
 # Set up the global logger variable
 logging.basicConfig(
@@ -62,35 +61,10 @@ def get_command_line_params():
     return mpad_watcher_ttl
 
 
-def convert_date_to_unix_timestamp(date_string: str):
+def get_mpad_status_info(callsign: str = "MPAD"):
     """
-    Convert web site date-time-stamp to unix timestamp
-
-    Parameters
-    ==========
-    date_string: 'str'
-    Our imput date time stamp, including time zone
-
-    Returns
-    =======
-    timestamp : 'float'
-            Unix timestamp in case of a successful conversion,
-            otherwise 'None'
-    """
-
-    try:
-        date_object = datetime.datetime.strptime(date_string, "%Y-%m-%d %H:%M:%S %Z")
-        timestamp = time.mktime(date_object.timetuple())
-        return timestamp
-    except ValueError as e:
-        logger.debug(msg=f"Error converting date string '{date_string}': {e}")
-        return None
-
-
-def get_mpad_status_info(url: str = "https://aprs.fi/info/a/MPAD"):
-    """
-    Gets MPAD's status page from aprs.fi, extracts
-    the "last heard" timestamp from the HTML content
+    Gets MPAD's status info from aprs.fi, extracts
+    the "last heard" timestamp from the JSON object
     and returns the timestamp as string
 
     Parameters
@@ -100,33 +74,59 @@ def get_mpad_status_info(url: str = "https://aprs.fi/info/a/MPAD"):
 
     Returns
     =======
-    resp : 'str'
-            'Last position' time stamp as string, 'None"
+    lasttime : 'float'
+            'Last position' time stamp as float, 'None"
             in case of an error
     """
 
     resp = None
-    try:
-        resp = requests.get(url=url)
-    except Exception as ex:
-        logger.debug(msg=f"Cannot retrieve MPAD status page '{url}' from aprs.fi")
-        resp = None
+    # Default user agent which is used by the program for sending requests to aprs.fi
+    default_user_agent = (
+        f"mpad-watcher (+https://github.com/joergschultzelutter/mpad-watcher/)"
+    )
+    headers = {"User-Agent": default_user_agent}
 
+    aprsdotfi_api_key = os.environ.get("MPAD_WATCHER_API_KEY")
+    if not aprsdotfi_api_key:
+        logger.debug(msg="aprs.fi API key environment variable is not set")
+        return None
+
+    # convert to upper if provided differently
+    callsign = callsign.upper()
+
+    try:
+        resp = requests.get(
+            url=f"https://api.aprs.fi/api/get?name={callsign}&what=loc&apikey={aprsdotfi_api_key}&format=json",
+            headers=headers,
+        )
+    except Exception as ex:
+        resp = None
     if resp:
         if resp.status_code == 200:
-            response = resp.text
-            matches = re.search(
-                pattern=r"\bLast position(.+)(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \w+)",
-                string=response,
-                flags=re.IGNORECASE,
-            )
-            if matches:
-                try:
-                    resp = matches[2]
-                except IndexError:
-                    logger.debug(msg="Error while retrieving value from regex")
-                    resp = None
-    return resp
+            try:
+                json_content = resp.json()
+            except Exception as ex:
+                json_content = {}
+            # extract web service result. Can either be 'ok' or 'fail'
+            if "result" in json_content:
+                result = json_content["result"]
+            if result == "ok":
+                # extract number of result sets in the response. Must be > 0
+                # regardless of the available number of results, we will only
+                # use the first result
+                found = 0
+                if "found" in json_content:
+                    found = json_content["found"]
+                if found > 0:
+                    # We extract only the very first entry and disregard
+                    # entries 2..n whereas ever present
+                    # now extract lasttime
+                    if "lasttime" in json_content["entries"][0]:
+                        try:
+                            return float(json_content["entries"][0]["lasttime"])
+                        except ValueError:
+                            pass
+    return None
 
 
 if __name__ == "__main__":

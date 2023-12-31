@@ -1,7 +1,8 @@
 #!/opt/local/bin/python3
 #
 # mpad-watcher
-# Module: various utility functions used by the program
+# Quick-and-dirty 'mpad' watchdog; generates output
+# for the AppleScript watchdog
 # Author: Joerg Schultze-Lutter, 2023
 #
 # This program is free software; you can redistribute it and/or modify
@@ -19,40 +20,22 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-import logging
 from utils import (
     get_command_line_params,
-    convert_date_to_unix_timestamp,
     get_mpad_status_info,
 )
 import time
 
-# Set up the global logger variable
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
-)
-logger = logging.getLogger(__name__)
-
-
 if __name__ == "__main__":
     ttl = get_command_line_params()
 
-    website_str_timestamp = get_mpad_status_info()
-    if website_str_timestamp:
-        website_unix_timestamp = convert_date_to_unix_timestamp(
-            date_string=website_str_timestamp
-        )
-        if website_unix_timestamp:
-            system_unix_timestamp = time.time()
-            seconds = system_unix_timestamp - website_unix_timestamp
-            if seconds > (ttl * 60):
-                logger.debug(msg="TTL exceeded")
-                print(website_str_timestamp)
-            else:
-                print("OK")
+    website_unix_timestamp = get_mpad_status_info()
+    if website_unix_timestamp:
+        system_unix_timestamp = time.time()
+        seconds = system_unix_timestamp - website_unix_timestamp
+        if seconds > (ttl * 60):
+            print(f"ERROR - TTL exceeded; last heard: {website_str_timestamp}")
         else:
-            logger.debug(msg="Cannot convert website time stamp")
-            print("ERROR - Cannot convert website time stamp")
+            print("OK")
     else:
-        logger.debug(msg="Cannot retrieve website time stamp")
-        print("ERROR - cannot retrieve website time stamp")
+        print("ERROR - cannot retrieve time stamp from aprs.fi")

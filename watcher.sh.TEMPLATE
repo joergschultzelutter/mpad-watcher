@@ -1,0 +1,8 @@
+#!/bin/bash
+export PYTHONWARNINGS=ignore
+export MPAD_WATCHER_API_KEY=your_aprsdotfi_api_key
+
+cd /path/to/mpad-watcher
+source .venv/bin/activate
+cd src
+python mpad_watcher.py
