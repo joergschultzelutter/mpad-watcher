@@ -199,5 +199,4 @@ def send_apprise_message(configfile: str, msg_title: str, msg_body: str):
 
 
 if __name__ == "__main__":
-    send_apprise_message("mpad-watcher.yml", "Title", "Ich bin ein Body")
     pass
