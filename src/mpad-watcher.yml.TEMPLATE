@@ -1,0 +1,7 @@
+version: 1
+
+urls:
+  # see https://github.com/caronc/apprise for how to create an Apprise yml file
+  - tgram://1234567890:ABCDEFGHIJKLMNOPQRSTUVWXYZ012345678/123456789
+
+  - macosx://_/?sound=default

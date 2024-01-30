@@ -24,10 +24,11 @@ import argparse
 import requests
 import re
 import os
+import apprise
 
 # Set up the global logger variable
 logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
+    level=logging.ERROR, format="%(asctime)s %(module)s -%(levelname)s- %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -55,10 +56,18 @@ def get_command_line_params():
         help="TTL check value in minutes",
     )
 
+    parser.add_argument(
+        "--configfile",
+        default="mpad-watcher.yml",
+        type=argparse.FileType("r"),
+        help="MPAD Watcher config file",
+    )
+
     args = parser.parse_args()
     mpad_watcher_ttl = args.ttl_alert_after
+    mpad_watcher_configfile = args.configfile
 
-    return mpad_watcher_ttl
+    return mpad_watcher_ttl, mpad_watcher_configfile
 
 
 def get_mpad_status_info(callsign: str = "MPAD"):
@@ -129,5 +138,66 @@ def get_mpad_status_info(callsign: str = "MPAD"):
     return None
 
 
+def does_file_exist(file_name: str):
+    """
+    Checks if the given file exists. Returns True/False.
+
+    Parameters
+    ==========
+    file_name: str
+                    our file name
+    Returns
+    =======
+    status: bool
+        True /False
+    """
+    return os.path.isfile(file_name)
+
+
+def send_apprise_message(configfile: str, msg_title: str, msg_body: str):
+    """
+    Sends a message via Apprise (https://github.com/caronc/apprise)
+
+    Parameters
+    ==========
+    configfile: str
+        Apprise YML config file
+    msg_title: str
+        our message title
+    msg_body: str
+        our message body
+    Returns
+    =======
+    status: bool
+        True /False
+    """
+
+    if not does_file_exist(configfile):
+        logger.debug(msg=f"Config file '{configfile}' does not exist")
+        return False
+
+    # Create the Apprise instance
+    apobj = apprise.Apprise()
+
+    # Create an Config instance
+    config = apprise.AppriseConfig()
+
+    # Add a configuration source:
+    config.add(configfile)
+
+    # Make sure to add our config into our apprise object
+    apobj.add(config)
+
+    # Send the notification
+    apobj.notify(
+        body=msg_body,
+        title=msg_title,
+        tag="all",
+    )
+
+    return True
+
+
 if __name__ == "__main__":
+    send_apprise_message("mpad-watcher.yml", "Title", "Ich bin ein Body")
     pass

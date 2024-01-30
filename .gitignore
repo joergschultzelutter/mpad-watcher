@@ -160,3 +160,5 @@ cython_debug/
 .idea/
 
 watcher.sh
+mpad-watcher.yml
+.DS_Store
