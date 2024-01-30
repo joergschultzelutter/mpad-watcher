@@ -6,6 +6,7 @@ Super-quick-and-dirty hack which checks on MacOS if my local MPAD instance is st
 
 ## Configuration
 - clone repository
+- rename `mpad-watcher.yml.TEMPLATE` to `mpad-watcher.yml`. Then use the [Apprise documentation](https://github.com/caronc/apprise) and create a YAML file for the messengers that you want to support. You can specify a different filename by using the program's `--configfile` parameter.
 - copy `watcher.sh.TEMPLATE` to `watcher.sh`
 - `chmod u+x watcher.sh`
 - edit `watcher.sh`:
