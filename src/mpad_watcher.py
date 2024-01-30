@@ -25,6 +25,7 @@ from utils import (
     get_mpad_status_info,
 )
 import time
+from datetime import datetime
 
 if __name__ == "__main__":
     ttl = get_command_line_params()
@@ -34,6 +35,7 @@ if __name__ == "__main__":
         system_unix_timestamp = time.time()
         seconds = system_unix_timestamp - website_unix_timestamp
         if seconds > (ttl * 60):
+            website_str_timestamp = datetime.fromtimestamp(website_unix_timestamp).strftime('%Y-%m-%d %H:%M:%SZ')
             print(f"ERROR - TTL exceeded; last heard: {website_str_timestamp}")
         else:
             print("OK")
