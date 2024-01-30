@@ -65,7 +65,7 @@ def get_command_line_params():
 
     args = parser.parse_args()
     mpad_watcher_ttl = args.ttl_alert_after
-    mpad_watcher_configfile = args.configfile
+    mpad_watcher_configfile = args.configfile.name
 
     return mpad_watcher_ttl, mpad_watcher_configfile
 
@@ -151,6 +151,9 @@ def does_file_exist(file_name: str):
     status: bool
         True /False
     """
+    pass
+    pass
+
     return os.path.isfile(file_name)
 
 
